@@ -1,49 +1,74 @@
-# Code for Good Hackathon UI Starter Template
+# OutLawed India — Intelligent Legal-Aid Knowledge & Case Management Platform
 
-A reusable, professional, and responsive dashboard starter template designed for a 3-person hackathon team. Built to be domain-neutral and easily customizable within minutes.
-
-## 🛠️ Tech Stack
-
-- **Frontend:** React (Vite)
-- **Styling:** Tailwind CSS (utility-first, responsive grid layout)
-- **Icons:** Lucide React
-- **API Client:** Axios (pre-configured with request/response interceptors)
-- **Backend:** Node.js + Express (cors, error handling middleware, and structure placeholders)
+An intelligent legal-aid prototype designed for **OutLawed India** to streamline grassroots dispute resolution, organize institutional legal expertise, and leverage AI-assisted search across a centralized previous cases repository.
 
 ---
 
-## 📂 Folder Structure
+## 🚀 Product Concept & Rationale
+
+OutLawed India supports rural communities by deploying field workers (**Nyaaya Mitras**) to log disputes on the ground. This platform facilitates communication between field workers, regional administrators, and senior legal experts through a secure, structured, and AI-enabled workspace.
+
+### 👥 The Three Human Roles + AI Assistant:
+1. **Nyaaya Mitra (The Doer):** Logs case files in communities (supporting voice-intake simulations), checks AI-suggested previous cases, schedules client follow-ups, drafts field notes, and escalates cases when human legal guidance is required.
+2. **Coordinator (The Monitor):** Monitors regional workloads and active caseloads, tracks community issue distributions, and triages expert escalation requests. *The coordinator does not provide legal advice.*
+3. **Legal Expert (The Guide):** Certified senior lawyers who review case histories, inspect uploaded files, compare similar cases, and submit professional legal advice directly into the Nyaaya Mitra case timelines.
+4. **AI Assistant (First-Level Assistance):** An assistant that queries the centralized **Previous Cases Repository** to summarize how similar disputes were historically handled. *The AI is clearly demarcated from human legal experts to comply with legal advice guidelines.*
+
+---
+
+## 🛠️ Tech Stack
+
+- **Frontend:** React 18 + Vite (SPA layout state routing)
+- **Styling:** Tailwind CSS (utility-first styling, grid rosters, status badges)
+- **Icons:** Lucide React
+- **Mock Database:** Asynchronous Delay-backed JavaScript Service Layer (`src/services/` and `src/utils/`)
+
+---
+
+## 📂 Project Structure
 
 ```
-project/
+05-PROJECT-TEMPLATE/
 ├── frontend/
+│   ├── index.html                  # Browser page container (custom OutLawed title tab)
 │   ├── src/
-│   │   ├── components/         # Reusable atomic UI components (Button, Modal, Table, etc.)
-│   │   ├── pages/              # Primary page views (Login, Dashboard, Profile, etc.)
-│   │   ├── services/           # Axios setup & interceptors
-│   │   ├── hooks/              # Custom React hooks folder placeholder
-│   │   ├── utils/              # Helper utility methods placeholder
-│   │   ├── App.jsx             # Authentication and client router state manager
-│   │   ├── main.jsx            # React root mount
-│   │   └── index.css           # Tailwind base integrations
-│   ├── tailwind.config.js
-│   ├── postcss.config.js
-│   ├── vite.config.js
+│   │   ├── components/             # Reusable UI Elements
+│   │   │   ├── Button.jsx          # Custom styled buttons
+│   │   │   ├── Card.jsx            # Panel containment grids
+│   │   │   ├── Input.jsx           # Form inputs with inline error validation
+│   │   │   ├── Select.jsx          # Form selection dropdowns
+│   │   │   ├── Table.jsx           # Responsive rosters data tables
+│   │   │   ├── Modal.jsx           # Inspect overlay popups
+│   │   │   ├── StatusBadge.jsx     # Visual state colors (e.g., Active, Resolved)
+│   │   │   ├── Navbar.jsx          # Sticky top bar with notifications bell & role switcher
+│   │   │   └── Sidebar.jsx         # Navigation sidebar customization
+│   │   │
+│   │   ├── services/               # API-Ready Asynchronous Mock Services
+│   │   │   ├── authService.js      # Session login simulation
+│   │   │   ├── caseService.js      # Case files creation, notes, and task checkbox toggles
+│   │   │   └── aiService.js        # AI prompt question records
+│   │   │
+│   │   ├── utils/                  # Central Mock Databases
+│   │   │   ├── mockData.js         # Core active disputes database (cases #1056, #1042)
+│   │   │   └── mockPreviousCases.js# exactly 50 anonymized previously resolved cases
+│   │   │
+│   │   └── pages/                  # Role Workspace Views
+│   │       ├── Login.jsx           # Polished split-screen credentials & demo login buttons
+│   │       ├── Profile.jsx         # Profile settings page
+│   │       ├── NotFound.jsx        # Fallback routes panel
+│   │       ├── Dashboard.jsx       # Nyaaya Mitra workspace dashboard & quick intake
+│   │       ├── CreateCase.jsx      # Multi-step intake form wizard (Steps 1-4)
+│   │       ├── CaseList.jsx        # Searchable and filterable case registry
+│   │       ├── CaseDetails.jsx     # Case dossier details (Timeline, Tasks, Notes)
+│   │       ├── AIAssistant.jsx     # Interactive chat assistant (PC-001 similarity search)
+│   │       ├── KnowledgeSearch.jsx # Semantic citations search
+│   │       ├── FollowUps.jsx       # outreach checklists calendars
+│   │       ├── ExpertGuidance.jsx  # Logs of cases escalated for human guidance
+│   │       ├── CoordinatorRequests.jsx # Coordinator reviews allocation board
+│   │       ├── CoordinatorMitras.jsx  # Mitra tracking caseload grids
+│   │       ├── CoordinatorInsights.jsx# Anonymized regional trends charts
+│   │       └── ExpertCases.jsx     # Senior guide advisory desk
 │   └── package.json
-│
-├── backend/
-│   ├── routes/                 # Express Router endpoint definitions
-│   ├── controllers/            # Request processing & database query handlers
-│   ├── models/                 # Database schema models folder placeholder
-│   ├── middleware/             # Error handlers & authentication checkers
-│   ├── services/               # Business logic / integration helpers
-│   ├── utils/                  # Backend utility methods
-│   ├── server.js               # Node Express server entrypoint
-│   └── package.json
-│
-├── .env.example                # Template configuration values for environment setup
-├── .gitignore                  # Exclusions for node_modules and real secret environment files
-└── README.md                   # This instruction file
 ```
 
 ---
@@ -52,78 +77,63 @@ project/
 
 Ensure you have [Node.js](https://nodejs.org/) (v18+) installed.
 
-### 1. Backend Setup
-
+### 1. Installation
+Navigate to the `frontend` folder and install dependencies:
 ```bash
-# Navigate to the backend directory
-cd backend
-
-# Install dependencies
-npm install
-
-# (Optional) Run the backend in development hot-reload mode
-npm run dev
-```
-
-The server will spin up on `http://localhost:5000`.
-
-### 2. Frontend Setup
-
-```bash
-# Open a new terminal and navigate to the frontend directory
 cd frontend
-
-# Install dependencies
 npm install
+```
 
-# Run the local Vite preview development server
+### 2. Launch Development Preview
+Run the local Vite preview development server:
+```bash
 npm run dev
 ```
+Open `http://localhost:5173` in your web browser.
 
-The Vite client will launch on `http://localhost:5173`. Open it in your web browser.
-
----
-
-## 🔒 Environment Variables
-
-Copy the `.env.example` file in the root of the project to your own private `.env` file:
-
+### 3. Build for Production
+Verify that the application compiles cleanly with zero compilation errors:
 ```bash
-cp .env.example .env
+npm run build
 ```
 
-### Configuration Keys:
-- `PORT`: Node server port (default: `5000`)
-- `CLIENT_URL`: Allowed Origin URL for CORS (default: `http://localhost:5173`)
-- `DATABASE_URL`: Connection string placeholder for databases (MongoDB/PostgreSQL)
-- `AUTH_SECRET`: Secret hash token for JWT session signatures
-- `API_KEY`: Placeholder for external API integrations
-
-> [!WARNING]
-> **CRITICAL SECURITY RULE:** Never commit your `.env` file containing real passwords, database links, or secret keys to GitHub. It is already added to `.gitignore`.
-
 ---
 
-## 🌐 Available API Endpoints
+## 🎬 Step-by-Step Demo Guide (The OutLawed Story)
 
-- **GET `/api/health`**
-  - **Description:** Health check validation to ensure backend is running.
-  - **Response:** `{"status": "ok", "timestamp": "...", "env": "..."}`
+### Step 1: Secure Login
+1. Open the login page. Note the split-screen design. Left: Features summary cards. Right: Security-first credentials form.
+2. Click **Try Nyaaya Mitra Workspace** to automatically login as **Ananya Rao**.
 
----
+### Step 2: Nyaaya Mitra Work & Case Intake
+1. On the dashboard, review the active caseload statistics and cases registry. Note the **Previous Cases** widget at the bottom right.
+2. Click **Register New Case** in the sidebar. 
+3. Fill out the multi-step wizard:
+   - **Step 1:** Enter title: *"Land inheritance dispute after father's death"* and select *Land / Property* category.
+   - **Step 2:** Click **Simulate Voice Translation (Kannada)** to record the Kannada intake notes, translating it into English.
+   - **Step 3:** Enter client name: *"Gowramma K."*, location: *"K R Pet Taluk"*, and set urgency to *Important*.
+   - **Step 4:** Review and submit. Click **View Case** to inspect the case details dossier.
+4. On the dossier page, note the **🔒 Sensitive Information** mask. Click **Reveal Details** to show client contact information. Mark one of the follow-up tasks as done or write a field note.
 
-## 🚀 WHAT WE CHANGE TOMORROW
-Once the actual problem statement is revealed, prioritize these changes:
+### Step 3: AI Assistant Similarity Check
+1. On the dossier page, notice the **Potentially Relevant Previous Cases** panel. Click **View Case** on **PC-001** to inspect an anonymized resolved land case.
+2. Go back and click **Ask AI Assistant**.
+3. In the chat, send the query: *"Have we handled similar land inheritance cases?"*.
+4. The AI Assistant searches the centralized repository and returns **PC-001** (92%), **PC-019** (86%), and **PC-038** (81%) with direct links.
+5. In the chat selection panel, click **No — Request Human Legal Expert** to launch the escalation request form. Enter details and submit.
 
-1. **Rename the Project:**
-   - Update `<title>` in `frontend/index.html`.
-   - Update `projectName` in `frontend/src/App.jsx`.
-   - Update titles on the `Login` page.
-2. **Apply Theme Branding:**
-   - Modify the custom color definitions (specifically `colors.primary`) in `frontend/tailwind.config.js` to match the target organization or brand palette.
-3. **Connect Real Backend Endpoint & Services:**
-   - Replace the simulated database arrays inside `frontend/src/pages/Dashboard.jsx` with real data fetched via `apiClient.get(...)` from `frontend/src/services/api.js`.
-   - Implement real user credentials validation inside `frontend/src/pages/Login.jsx` using `apiClient.post('/auth/login', ...)`.
-4. **Create API Routes:**
-   - Add express routes in `backend/routes/` and register them under `backend/server.js`.
-   - Add mongoose models in `backend/models/` or SQL schemas to bind with your datastore URL.
+### Step 4: Coordinator Review & Access Control
+1. Switch roles to **Coordinator (Supervisor)** using the dropdown in the header navbar. Note that the profile name updates to **Suresh Kumar**.
+2. Click **Expert Requests** in the sidebar.
+3. Select **Case #1056** from the triage queue. Read the details, then click **Enable Human Expert Access**. Notice the status updates immediately.
+
+### Step 5: Human Legal Expert Advisory
+1. Switch roles to **Legal Expert (Guide)**. Note that the profile name updates to **Dr. Priya Sharma**.
+2. Click **Cases for Review** in the sidebar.
+3. Select **Case #1056** in the advisory desk. Note the Mitra's question. Type professional guidance comments in the text area and click **Submit Human Guidance**.
+
+### Step 6: Case Resolution
+1. Switch roles back to **Nyaaya Mitra**.
+2. Open **My Cases** and select **Case #1056**.
+3. Review the timeline. You will see that **Dr. Priya Sharma's** legal guidance comments have been recorded.
+4. Click **Yes — Continue Case (Resolve)** to close the file.
