@@ -4,6 +4,7 @@ import Card from '../components/Card';
 import Button from '../components/Button';
 import Select from '../components/Select';
 import { mockPreviousCases } from '../utils/mockPreviousCases';
+import apiClient from '../services/api';
 
 export default function PreviousCases({ onNavigate }) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -15,11 +16,36 @@ export default function PreviousCases({ onNavigate }) {
   const [priorityFilter, setPriorityFilter] = useState('');
   
   const [sortBy, setSortBy] = useState('Most Recent');
-  const [filteredCases, setFilteredCases] = useState(mockPreviousCases);
+  const [allCases, setAllCases] = useState([]);
+  const [filteredCases, setFilteredCases] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPreviousCases = async () => {
+      try {
+        const response = await apiClient.get('/previous-cases');
+        const transformed = response.data.map(c => ({
+          ...c,
+          actionsTaken: typeof c.actionsTaken === 'string' ? c.actionsTaken.split(',') : (c.actionsTaken || []),
+          documents: typeof c.documents === 'string' ? c.documents.split(',') : (c.documents || []),
+          tags: typeof c.tags === 'string' ? c.tags.split(',') : (c.tags || [])
+        }));
+        setAllCases(transformed);
+        setFilteredCases(transformed);
+      } catch (err) {
+        console.warn('Failed to fetch from Spring Boot, falling back to local dataset:', err);
+        setAllCases(mockPreviousCases);
+        setFilteredCases(mockPreviousCases);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPreviousCases();
+  }, []);
 
   useEffect(() => {
     // Apply filters and search query
-    let result = [...mockPreviousCases];
+    let result = [...allCases];
 
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase();
@@ -277,61 +303,72 @@ export default function PreviousCases({ onNavigate }) {
       </Card>
 
       {/* Grid of Case Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {filteredCases.map(item => (
-          <Card key={item.id} className="hover:border-emerald-300 transition-colors shadow-sm flex flex-col justify-between">
-            <div className="space-y-3">
-              <div className="flex justify-between items-center border-b pb-2">
-                <span className="font-bold text-gray-400 font-mono text-[10px] tracking-wider">{item.id}</span>
-                <span className={`px-2 py-0.5 rounded text-[9px] font-bold border
-                  ${item.priority === 'Urgent' ? 'bg-red-50 text-red-700 border-red-200 animate-pulse' : 
-                    item.priority === 'Important' ? 'bg-blue-50 text-blue-700 border-blue-200' : 
-                    'bg-gray-50 text-gray-700 border-gray-250'}
+      {loading ? (
+        <div className="flex justify-center items-center py-16 bg-white border rounded-lg shadow-sm">
+          <svg className="animate-spin h-6 w-6 text-emerald-600 mr-2.5" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+          </svg>
+          <span className="text-xs font-semibold text-gray-500">Querying SQL database repository...</span>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {filteredCases.map(item => (
+            <Card key={item.id} className="hover:border-emerald-300 transition-colors shadow-sm flex flex-col justify-between">
+              <div className="space-y-3">
+                <div className="flex justify-between items-center border-b pb-2">
+                  <span className="font-bold text-gray-400 font-mono text-[10px] tracking-wider">{item.id}</span>
+                  <span className={`px-2 py-0.5 rounded text-[9px] font-bold border
+                    ${item.priority === 'Urgent' ? 'bg-red-50 text-red-700 border-red-200 animate-pulse' : 
+                      item.priority === 'Important' ? 'bg-blue-50 text-blue-700 border-blue-200' : 
+                      'bg-gray-50 text-gray-700 border-gray-250'}
+                  `}>
+                    {item.priority}
+                  </span>
+                </div>
+
+                <div>
+                  <h3 className="font-bold text-gray-955 text-sm leading-snug">{item.title}</h3>
+                  <p className="text-[10px] font-medium text-gray-450 mt-1 uppercase tracking-wide">
+                    {item.issueType}
+                  </p>
+                  <p className="text-[10px] text-gray-400 font-medium">
+                    {item.district} • {item.language} • {item.year}
+                  </p>
+                </div>
+
+                <div className="pt-2 pb-2">
+                  <span className="text-[10px] text-gray-455 block font-bold uppercase tracking-wider">Lessons Learned:</span>
+                  <p className="text-xs text-gray-600 leading-normal italic mt-0.5 font-medium">
+                    "{item.lessonsLearned || 'Early document verification prevented delays.'}"
+                  </p>
+                </div>
+              </div>
+
+              <div className="border-t pt-3 mt-3 flex items-center justify-between">
+                <span className={`px-2 py-0.5 rounded text-[10px] font-bold border
+                  ${item.outcome === 'Resolved' ? 'bg-emerald-50 text-emerald-700 border-emerald-250' : 
+                    item.outcome === 'Support Completed' ? 'bg-indigo-50 text-indigo-700 border-indigo-250' : 
+                    'bg-amber-50 text-amber-700 border-amber-250'}
                 `}>
-                  {item.priority}
+                  {item.outcome}
                 </span>
+
+                <Button 
+                  variant="outline" 
+                  className="!py-1 !px-2.5 text-[11px] font-bold hover:bg-emerald-50 border-emerald-300 text-emerald-800 bg-white"
+                  onClick={() => onNavigate('previous-case-details', item.id)}
+                >
+                  <Eye className="h-3.5 w-3.5" />
+                  View Case
+                </Button>
               </div>
+            </Card>
+          ))}
+        </div>
+      )}
 
-              <div>
-                <h3 className="font-bold text-gray-950 text-sm leading-snug">{item.title}</h3>
-                <p className="text-[10px] font-medium text-gray-450 mt-1 uppercase tracking-wide">
-                  {item.issueType}
-                </p>
-                <p className="text-[10px] text-gray-400 font-medium">
-                  {item.district} • {item.language} • {item.year}
-                </p>
-              </div>
-
-              <div className="pt-2 pb-2">
-                <span className="text-[10px] text-gray-450 block font-bold uppercase tracking-wider">Lessons Learned:</span>
-                <p className="text-xs text-gray-600 leading-normal italic mt-0.5 font-medium">
-                  "{item.lessonsLearned || 'Early document verification prevented delays.'}"
-                </p>
-              </div>
-            </div>
-
-            <div className="border-t pt-3 mt-3 flex items-center justify-between">
-              <span className={`px-2 py-0.5 rounded text-[10px] font-bold border
-                ${item.outcome === 'Resolved' ? 'bg-green-50 text-green-700 border-green-200' :
-                  item.outcome === 'Support Completed' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                  'bg-gray-50 text-gray-700 border-gray-200'}
-              `}>
-                ✓ {item.outcome}
-              </span>
-              <Button 
-                variant="outline"
-                className="!py-1 !px-3 text-xs bg-white border-gray-300 font-bold hover:bg-gray-50 flex items-center gap-1 text-gray-750"
-                onClick={() => onNavigate('previous-case-details', item.id)}
-              >
-                <Eye className="h-3.5 w-3.5" />
-                View Case
-              </Button>
-            </div>
-          </Card>
-        ))}
-      </div>
-
-      {filteredCases.length === 0 && (
+      {filteredCases.length === 0 && !loading && (
         <div className="text-center py-12 bg-white border rounded shadow-inner">
           <BookOpen className="h-8 w-8 text-gray-400 mx-auto mb-2" />
           <p className="text-xs text-gray-505 font-bold">No resolved cases match your filter criteria.</p>
