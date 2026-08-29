@@ -1,0 +1,10 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom scrollbars or minimal resets can go here */
+@layer base {
+  body {
+    @apply h-full bg-gray-50 text-gray-900;
+  }
+}
