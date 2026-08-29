@@ -1,195 +1,169 @@
 import apiClient from './api';
+import { mockCases } from '../utils/mockData';
 
-// Transform Spring Boot Case Record to match frontend interface requirements
-const transformCase = (c) => {
-  if (!c) return null;
-  const idStr = c.id.toString();
-  
-  // Build a timeline dynamically from SQL columns
-  const timeline = [
-    { 
-      date: c.lastUpdated || '2026-08-29', 
-      title: 'Case Intake Logged', 
-      description: 'Nyaaya Mitra completed intake forms and documented dispute parameters.', 
-      user: c.createdBy || 'Ananya Rao' 
-    }
-  ];
+// Maintain a mock mutable state in memory for live updates during the session
+let localCases = [...mockCases];
 
-  if (c.expertQuestion) {
-    timeline.push({
-      date: c.lastUpdated || '2026-08-29',
-      title: 'Expert Access Requested',
-      description: `Escalated Question: "${c.expertQuestion}"`,
-      user: c.createdBy || 'Ananya Rao'
-    });
-  }
-
-  if (c.status === 'Under Expert Review' || c.status === 'Expert Access Enabled') {
-    timeline.push({
-      date: c.lastUpdated || '2026-08-29',
-      title: 'Expert Access Enabled',
-      description: `Coordinator Suresh Kumar enabled human expert review access.`,
-      user: 'Suresh Kumar'
-    });
-  }
-
-  if (c.expertComments) {
-    timeline.push({
-      date: c.expertAnswerDate || c.lastUpdated || '2026-08-29',
-      title: 'Legal Counsel Advice Logged',
-      description: c.expertComments,
-      user: c.expertAdvisor || 'Dr. Priya Sharma'
-    });
-  }
-
-  // Format Notes list
-  const notes = (c.notes || []).map(n => ({
-    id: n.id.toString(),
-    date: n.createdAt ? n.createdAt.split(' ')[0] : '2026-08-29',
-    author: n.author,
-    text: n.text
-  }));
-
-  // Format Tasks list
-  const tasks = (c.tasks || []).map(t => ({
-    id: t.id.toString(),
-    title: t.title,
-    done: t.done,
-    date: t.dueDate || '2026-08-29'
-  }));
-
-  // Format Documents array
-  const documents = c.fileName ? [
-    { id: 'doc-1', name: c.fileName, size: '2.5 MB', type: 'PDF', uploadDate: c.lastUpdated || '2026-08-29' }
-  ] : [];
-
-  return {
-    ...c,
-    id: idStr,
-    clientDetails: c.situation,
-    createdDate: c.lastUpdated || '2026-08-29',
-    timeline,
-    notes,
-    tasks,
-    documents,
-    guidance: {
-      requested: !!c.expertQuestion,
-      question: c.expertQuestion || '',
-      expertComments: c.expertComments || '',
-      status: c.status,
-      answerDate: c.expertAnswerDate || '',
-      expertAdvisor: c.expertAdvisor || ''
-    }
-  };
-};
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export const caseService = {
   /**
-   * Fetch all cases from Spring Boot
+   * Fetch all cases (optional filter by Nyaaya Mitra ID)
+   * Tomorrow: Replace with GET `/cases`
    */
   getCases: async (mitraId = null) => {
-    const response = await apiClient.get('/cases');
-    const cases = response.data.map(transformCase);
+    await delay(600);
     if (mitraId) {
-      return cases.filter(c => c.createdBy === 'Ananya Rao'); // filter by mock profile
+      return localCases.filter(c => c.mitraId === mitraId);
     }
-    return cases;
+    return localCases;
   },
 
   /**
-   * Fetch case by ID from Spring Boot
+   * Fetch a single case by ID
+   * Tomorrow: Replace with GET `/cases/:id`
    */
   getCaseById: async (id) => {
-    const response = await apiClient.get(`/cases/${id}`);
-    return transformCase(response.data);
+    await delay(400);
+    const item = localCases.find(c => c.id === id);
+    if (!item) throw new Error('Case not found');
+    return { ...item };
   },
 
   /**
-   * Create new case record on Spring Boot
+   * Create a new case record
+   * Tomorrow: Replace with POST `/cases`
    */
-  createCase: async (caseData, authorName = 'Ananya Rao') => {
-    const payload = {
-      title: caseData.title || 'General Legal Dispute',
+  createCase: async (caseData, authorName = 'Sarah Connor') => {
+    await delay(1000);
+    const newId = String(1000 + localCases.length + 60); // e.g. #1060
+    const newRecord = {
+      id: newId,
       issueType: caseData.issueType,
       district: caseData.district,
       location: caseData.location || 'Unknown location',
       urgency: caseData.urgency || 'Normal',
       status: 'Active',
-      language: caseData.language || 'Kannada',
-      followUpDate: caseData.followUpDate || new Date().toISOString().split('T')[0],
-      clientName: caseData.clientName || 'Anonymous Client',
-      clientAge: parseInt(caseData.clientAge) || 0,
-      clientPhone: caseData.clientPhone || '',
-      fileName: caseData.fileName || null,
-      situation: caseData.clientDetails || '',
-      createdBy: authorName,
+      createdDate: new Date().toISOString().split('T')[0],
       lastUpdated: new Date().toISOString().split('T')[0],
+      followUpDate: caseData.followUpDate || new Date().toISOString().split('T')[0],
+      mitraId: 'm1',
+      mitraName: authorName,
+      clientName: caseData.clientName || 'Anonymous Client',
+      clientPhone: caseData.clientPhone || 'Hidden Phone',
+      clientAge: parseInt(caseData.clientAge) || 0,
+      clientDetails: caseData.clientDetails || '',
+      summary: caseData.clientDetails ? caseData.clientDetails.slice(0, 100) + '...' : '',
+      timeline: [
+        { date: new Date().toISOString().split('T')[0], title: 'Case Created', description: 'Nyaaya Mitra recorded client details.', user: authorName }
+      ],
+      notes: caseData.notes ? [{ id: 'n1', date: new Date().toISOString().split('T')[0], author: authorName, text: caseData.notes }] : [],
+      documents: caseData.fileName ? [{ id: `d-${Date.now()}`, name: caseData.fileName, size: '2.5 MB', type: 'PDF', uploadDate: new Date().toISOString().split('T')[0] }] : [],
       tasks: [
-        { title: 'Verify credentials and initial brief', done: true, dueDate: new Date().toISOString().split('T')[0] }
-      ]
+        { id: 't-init', title: 'Verify credentials and initial brief', done: true, date: new Date().toISOString().split('T')[0] }
+      ],
+      guidance: {
+        requested: false,
+        question: '',
+        priority: 'Normal',
+        status: 'Awaiting Expert',
+        expertComments: '',
+        answerDate: ''
+      },
+      similarCases: []
     };
 
-    const response = await apiClient.post('/cases', payload);
-    return transformCase(response.data);
+    localCases = [newRecord, ...localCases];
+    return newRecord;
   },
 
   /**
-   * Update case properties on Spring Boot
+   * Update an existing case
+   * Tomorrow: Replace with PUT `/cases/:id`
    */
   updateCase: async (id, updatedFields) => {
-    const payload = {};
-    if (updatedFields.status) payload.status = updatedFields.status;
-    if (updatedFields.urgency) payload.urgency = updatedFields.urgency;
+    await delay(600);
+    const idx = localCases.findIndex(c => c.id === id);
+    if (idx === -1) throw new Error('Case not found');
     
-    // Map expert guidance requests
-    if (updatedFields.guidance) {
-      const g = updatedFields.guidance;
-      if (g.question) payload.expertQuestion = g.question;
-      if (g.expertAdvisor) payload.expertAdvisor = g.expertAdvisor;
-      if (g.expertComments) payload.expertComments = g.expertComments;
-      if (g.answerDate) payload.expertAnswerDate = g.answerDate;
-      if (g.status) payload.status = g.status;
-    }
-
-    const response = await apiClient.put(`/cases/${id}`, payload);
-    return transformCase(response.data);
+    localCases[idx] = {
+      ...localCases[idx],
+      ...updatedFields,
+      lastUpdated: new Date().toISOString().split('T')[0],
+      timeline: [
+        ...localCases[idx].timeline,
+        {
+          date: new Date().toISOString().split('T')[0],
+          title: 'Case Updated',
+          description: 'Details and fields were updated.',
+          user: updatedFields.editorName || 'User'
+        }
+      ]
+    };
+    return { ...localCases[idx] };
   },
 
   /**
-   * Add a case note on Spring Boot
+   * Add a field note to a case
    */
   addNote: async (caseId, noteText, author) => {
-    const response = await apiClient.post(`/cases/${caseId}/notes`, { text: noteText, author });
-    const n = response.data;
-    return {
-      id: n.id.toString(),
-      date: n.createdAt ? n.createdAt.split(' ')[0] : '2026-08-29',
-      author: n.author,
-      text: n.text
+    await delay(300);
+    const idx = localCases.findIndex(c => c.id === caseId);
+    if (idx === -1) throw new Error('Case not found');
+
+    const newNote = {
+      id: `n-${Date.now()}`,
+      date: new Date().toISOString().split('T')[0],
+      author,
+      text: noteText
     };
+
+    localCases[idx].notes = [...localCases[idx].notes, newNote];
+    localCases[idx].timeline = [
+      ...localCases[idx].timeline,
+      { date: new Date().toISOString().split('T')[0], title: 'Note Added', description: 'A new field note was submitted.', user: author }
+    ];
+    return newNote;
   },
 
   /**
-   * Add a task on Spring Boot (handled via case save or controller)
+   * Add a follow-up task to a case
    */
   addTask: async (caseId, taskTitle, date) => {
-    // Standard template returns empty since default items are seeded
-    return {
-      id: Date.now().toString(),
+    await delay(300);
+    const idx = localCases.findIndex(c => c.id === caseId);
+    if (idx === -1) throw new Error('Case not found');
+
+    const newTask = {
+      id: `t-${Date.now()}`,
       title: taskTitle,
       done: false,
-      date: date || '2026-08-29'
+      date: date || new Date().toISOString().split('T')[0]
     };
+
+    localCases[idx].tasks = [...localCases[idx].tasks, newTask];
+    return newTask;
   },
 
   /**
-   * Toggle task checkbox on Spring Boot
+   * Toggle follow-up task completion status
    */
-  toggleTask: async (caseId, taskId, isDone) => {
-    // Put check status update to Spring Boot task update endpoint
-    await apiClient.put(`/cases/tasks/${taskId}`, { done: isDone });
-    return [];
+  toggleTask: async (caseId, taskId) => {
+    await delay(200);
+    const idx = localCases.findIndex(c => c.id === caseId);
+    if (idx === -1) throw new Error('Case not found');
+
+    localCases[idx].tasks = localCases[idx].tasks.map(t => {
+      if (t.id === taskId) {
+        return { ...t, done: !t.done };
+      }
+      return t;
+    });
+
+    return localCases[idx].tasks;
   }
 };
 
+// Export raw variable to sync with expert/coordinator modifications easily
+export { localCases };
 export default caseService;

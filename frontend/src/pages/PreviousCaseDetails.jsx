@@ -4,57 +4,23 @@ import Card from '../components/Card';
 import Button from '../components/Button';
 import StatusBadge from '../components/StatusBadge';
 import { mockPreviousCases } from '../utils/mockPreviousCases';
-import apiClient from '../services/api';
 
 export default function PreviousCaseDetails({ previousCaseId, onNavigate }) {
   const [caseItem, setCaseItem] = useState(null);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchDetail = async () => {
-      setLoading(true);
-      try {
-        const response = await apiClient.get(`/previous-cases/${previousCaseId}`);
-        const c = response.data;
-        const transformed = {
-          ...c,
-          actionsTaken: typeof c.actionsTaken === 'string' ? c.actionsTaken.split(',') : (c.actionsTaken || []),
-          documents: typeof c.documents === 'string' ? c.documents.split(',') : (c.documents || []),
-          tags: typeof c.tags === 'string' ? c.tags.split(',') : (c.tags || [])
-        };
-        setCaseItem(transformed);
-      } catch (err) {
-        console.warn('Failed to load previous case from backend, falling back to local file:', err);
-        const match = mockPreviousCases.find(c => c.id === previousCaseId);
-        setCaseItem(match);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     if (previousCaseId) {
-      fetchDetail();
+      const match = mockPreviousCases.find(c => c.id === previousCaseId);
+      setCaseItem(match);
     }
   }, [previousCaseId]);
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center py-20 bg-white border rounded-lg shadow-sm">
-        <svg className="animate-spin h-6 w-6 text-emerald-600 mr-2.5" fill="none" viewBox="0 0 24 24">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-        </svg>
-        <span className="text-xs font-semibold text-gray-500">Retrieving case dossier from database...</span>
-      </div>
-    );
-  }
 
   if (!caseItem) {
     return (
       <div className="text-center py-12">
-        <p className="text-xs text-gray-550 font-bold">Anonymized Case #{previousCaseId} could not be resolved.</p>
-        <Button onClick={() => onNavigate('previous-cases')} className="mt-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs">
-          Return to Catalog
+        <p className="text-xs text-gray-500">Previous Case #{previousCaseId} could not be found.</p>
+        <Button onClick={() => onNavigate('previous-cases')} className="mt-4">
+          Go to Index
         </Button>
       </div>
     );

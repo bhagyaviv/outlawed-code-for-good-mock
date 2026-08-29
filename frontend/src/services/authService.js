@@ -1,36 +1,48 @@
 import apiClient from './api';
 
+// Simulate API lag
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 export const authService = {
   /**
-   * Log in via Spring Boot /api/auth/login endpoint
+   * Mock login validating role attributes
+   * Tomorrow: Replace with POST request to `/auth/login`
    */
-  login: async (emailOrUsername, password) => {
-    // Extract username prefix if email is entered (e.g., "mitra@outlawed.org" -> "mitra")
-    let username = emailOrUsername;
-    if (emailOrUsername.includes('@')) {
-      username = emailOrUsername.split('@')[0];
+  login: async (email, password) => {
+    await delay(1000);
+    
+    // Demo account routing
+    let role = 'mitra';
+    let name = 'Sarah Connor';
+    
+    if (email === 'coordinator@outlawed.org') {
+      role = 'coordinator';
+      name = 'Vikram Sen';
+    } else if (email === 'expert@outlawed.org') {
+      role = 'expert';
+      name = 'Dr. Vivek Hegde';
+    } else if (email === 'demo@example.com' || email.includes('mitra')) {
+      role = 'mitra';
+      name = 'Sarah Connor';
+    } else {
+      throw new Error('Invalid email or password. Use demo emails for testing.');
     }
 
-    const response = await apiClient.post('/auth/login', { username, password });
-    const user = response.data;
-
-    // Save mock token to local storage for Axios request interceptors
-    localStorage.setItem('authToken', 'mock-jwt-token-outlawed');
-
-    return {
+    const mockResponse = {
       token: 'mock-jwt-token-outlawed',
       user: {
-        id: user.id.toString(),
-        name: user.name,
-        email: emailOrUsername,
-        role: user.role
+        id: role === 'mitra' ? 'm1' : (role === 'coordinator' ? 'c1' : 'e1'),
+        name,
+        email,
+        role // 'mitra' | 'coordinator' | 'expert'
       }
     };
+
+    return mockResponse;
   },
 
   logout: async () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('authUser');
+    await delay(200);
     return true;
   }
 };
